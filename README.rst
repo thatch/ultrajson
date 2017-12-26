@@ -26,7 +26,7 @@ To install:
 Back to your regularly scheduled readme
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-UltraJSON is an ultra fast JSON encoder and decoder written in pure C with bindings for Python 2.5+ and 3.
+UltraJSON is an ultra fast JSON encoder and decoder written in pure C with bindings for Python 2.7 and 3.4+.
 
 For a more painless day to day C/C++ JSON decoder experience please checkout ujson4c_, based on UltraJSON.
 
