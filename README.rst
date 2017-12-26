@@ -1,5 +1,14 @@
 UltraJSON (Internet Archive Fork)
 =================================
+
+.. image:: https://img.shields.io/pypi/v/ujson-ia.svg?style=flat
+    :alt: PyPI version
+    :target: https://pypi.python.org/pypi/ujson-ia
+
+.. image:: https://img.shields.io/pypi/pyversions/ujson-ia.svg
+    :alt: Supported Python versions
+    :target: https://pypi.python.org/pypi/ujson-ia
+
 .. image:: https://travis-ci.org/internetarchive/ultrajson.svg?branch=master
     :target: https://travis-ci.org/internetarchive/ultrajson
 
