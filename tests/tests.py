@@ -4,24 +4,20 @@ import six
 from six.moves import range, zip
 
 import calendar
-import datetime
 import functools
 import decimal
 import json
 import math
 import time
+import sys
 import pytz
+
 if six.PY2:
     import unittest2 as unittest
 else:
     import unittest
 
 import ujson
-
-try:
-    from blist import blist
-except ImportError:
-    blist = None
 
 json_unicode = json.dumps if six.PY3 else functools.partial(json.dumps, encoding="utf-8")
 
@@ -169,7 +165,7 @@ class UltraJSONTests(unittest.TestCase):
     
     def test_encodeDecimal(self):
         sut = decimal.Decimal("1337.1337")
-        encoded = ujson.encode(sut, double_precision=100)
+        encoded = ujson.encode(sut)
         decoded = ujson.decode(encoded)
         self.assertEqual(decoded, 1337.1337)
 
@@ -209,7 +205,7 @@ class UltraJSONTests(unittest.TestCase):
         encoded = json.dumps(sut)
         decoded = json.loads(encoded)
         self.assertEqual(sut, decoded)
-        encoded = ujson.encode(sut, double_precision=100)
+        encoded = ujson.encode(sut)
         decoded = ujson.decode(encoded)
         self.assertEqual(sut, decoded)
 
@@ -218,13 +214,13 @@ class UltraJSONTests(unittest.TestCase):
         encoded = json.dumps(sut)
         decoded = json.loads(encoded)
         self.assertEqual(sut, decoded)
-        encoded = ujson.encode(sut, double_precision=100)
+        encoded = ujson.encode(sut)
         decoded = ujson.decode(encoded)
         self.assertEqual(sut, decoded)
 
     def test_encodeDecodeLongDecimal(self):
         sut = {'a': -528656961.4399388}
-        encoded = ujson.dumps(sut, double_precision=15)
+        encoded = ujson.dumps(sut)
         ujson.decode(encoded)
 
     def test_decimalDecodeTest(self):
@@ -232,12 +228,6 @@ class UltraJSONTests(unittest.TestCase):
         encoded = ujson.encode(sut)
         decoded = ujson.decode(encoded)
         self.assertAlmostEqual(sut[u'a'], decoded[u'a'])
-
-    def test_decimalDecodeTestPrecise(self):
-        sut = {'a': 4.56}
-        encoded = ujson.encode(sut)
-        decoded = ujson.decode(encoded, precise_float=True)
-        self.assertEqual(sut, decoded)
 
     def test_encodeDictWithUnicodeKeys(self):
         input = {"key1": "value1", "key1": "value1", "key1": "value1", "key1": "value1", "key1": "value1", "key1": "value1"}
@@ -277,37 +267,6 @@ class UltraJSONTests(unittest.TestCase):
         self.assertEqual(input, json.loads(output))
         #self.assertEqual(output, json.dumps(input))
         self.assertEqual(input, ujson.decode(output))
-
-    def test_doublePrecisionTest(self):
-        input = 30.012345678901234
-        output = ujson.encode(input, double_precision=15)
-        self.assertEqual(input, json.loads(output))
-        self.assertEqual(input, ujson.decode(output))
-
-        output = ujson.encode(input, double_precision=9)
-        self.assertEqual(round(input, 9), json.loads(output))
-        self.assertEqual(round(input, 9), ujson.decode(output))
-
-        output = ujson.encode(input, double_precision=3)
-        self.assertEqual(round(input, 3), json.loads(output))
-        self.assertEqual(round(input, 3), ujson.decode(output))
-
-    def test_invalidDoublePrecision(self):
-        input = 30.12345678901234567890
-        output = ujson.encode(input, double_precision=20)
-        # should snap to the max, which is 15
-        self.assertEqual(round(input, 15), json.loads(output))
-        self.assertEqual(round(input, 15), ujson.decode(output))
-
-        output = ujson.encode(input, double_precision=-1)
-        # also should snap to the max, which is 15
-        self.assertEqual(round(input, 15), json.loads(output))
-        self.assertEqual(round(input, 15), ujson.decode(output))
-
-        # will throw typeError
-        self.assertRaises(TypeError, ujson.encode, input, double_precision='9')
-        # will throw typeError
-        self.assertRaises(TypeError, ujson.encode, input, double_precision=None)
 
     def test_encodeStringConversion2(self):
         input = "A string \\ / \b \f \n \r \t"
@@ -483,41 +442,6 @@ class UltraJSONTests(unittest.TestCase):
         self.assertEqual(output, json.dumps(input))
         self.assertEqual(input, ujson.decode(output))
 
-    def test_encodeDatetimeConversion(self):
-        ts = time.time()
-        input = datetime.datetime.fromtimestamp(ts)
-        output = ujson.encode(input)
-        expected = calendar.timegm(input.utctimetuple())
-        self.assertEqual(int(expected), json.loads(output))
-        self.assertEqual(int(expected), ujson.decode(output))
-
-    def test_encodeDateConversion(self):
-        ts = time.time()
-        input = datetime.date.fromtimestamp(ts)
-
-        output = ujson.encode(input)
-        tup = (input.year, input.month, input.day, 0, 0, 0)
-
-        expected = calendar.timegm(tup)
-        self.assertEqual(int(expected), json.loads(output))
-        self.assertEqual(int(expected), ujson.decode(output))
-
-    def test_encodeWithTimezone(self):
-        start_timestamp = 1383647400
-        a = datetime.datetime.utcfromtimestamp(start_timestamp)
-
-        a = a.replace(tzinfo=pytz.utc)
-        b = a.astimezone(pytz.timezone('America/New_York'))
-        c = b.astimezone(pytz.utc)
-
-        d = {'a':a, 'b':b, 'c':c}
-        json_string = ujson.encode(d)
-        json_dict = ujson.decode(json_string)
-
-        self.assertEqual(json_dict.get('a'),start_timestamp)
-        self.assertEqual(json_dict.get('b'),start_timestamp)
-        self.assertEqual(json_dict.get('c'),start_timestamp)
-
     def test_encodeToUTF8(self):
         input = b"\xe6\x97\xa5\xd1\x88"
         if six.PY3:
@@ -537,11 +461,15 @@ class UltraJSONTests(unittest.TestCase):
         # 8 is the max recursion depth
         class O2:
             member = 0
-            pass
+
+            def toDict(self):
+                return {"member": self.member}
 
         class O1:
             member = 0
-            pass
+
+            def toDict(self):
+                return {"member": self.member}
 
         input = O1()
         input.member = O2()
@@ -559,6 +487,12 @@ class UltraJSONTests(unittest.TestCase):
     def test_encodeDoubleNegInf(self):
         input = -float('inf')
         self.assertRaises(OverflowError, ujson.encode, input)
+
+    @unittest.skipIf(sys.version_info < (2, 7), "No Ordered dict in < 2.7")
+    def test_encodeOrderedDict(self):
+        from collections import OrderedDict
+        input = OrderedDict([(1, 1), (0, 0), (8, 8), (2, 2)])
+        self.assertEqual('{"1":1,"0":0,"8":8,"2":2}', ujson.encode(input))
 
     def test_decodeJibberish(self):
         input = "fdsa sda v9sa fdsa"
@@ -787,14 +721,6 @@ class UltraJSONTests(unittest.TestCase):
     def test_encodeNumericOverflow(self):
         self.assertRaises(OverflowError, ujson.encode, 12839128391289382193812939)
 
-    def test_encodeNumericOverflowNested(self):
-        for n in range(0, 100):
-            class Nested:
-                x = 12839128391289382193812939
-
-            nested = Nested()
-            self.assertRaises(OverflowError, ujson.encode, nested)
-
     def test_decodeNumberWith32bitSignBit(self):
         #Test that numbers that fit within 32 bits but would have the
         # sign bit set (2**31 <= x < 2**32) are decoded properly.
@@ -828,16 +754,6 @@ class UltraJSONTests(unittest.TestCase):
             input = quote + (base * 1024 * 1024 * 2) + quote
             ujson.decode(input)
 
-    def test_object_default(self):
-        # An object without toDict or __json__ defined should be serialized
-        # as an empty dict.
-        class ObjectTest:
-            pass
-
-        output = ujson.encode(ObjectTest())
-        dec = ujson.decode(output)
-        self.assertEquals(dec, {})
-
     def test_toDict(self):
         d = {"key": 31337}
 
@@ -863,7 +779,7 @@ class UltraJSONTests(unittest.TestCase):
         d = {u'key': JSONTest()}
         output = ujson.encode(d)
         dec = ujson.decode(output)
-        self.assertEquals(dec, {u'key': output_text})
+        self.assertEqual(dec, {u'key': output_text})
 
     def test_object_with_json_unicode(self):
         # If __json__ returns a string, then that string
@@ -876,7 +792,7 @@ class UltraJSONTests(unittest.TestCase):
         d = {u'key': JSONTest()}
         output = ujson.encode(d)
         dec = ujson.decode(output)
-        self.assertEquals(dec, {u'key': output_text})
+        self.assertEqual(dec, {u'key': output_text})
 
     def test_object_with_complex_json(self):
         # If __json__ returns a string, then that string
@@ -889,7 +805,7 @@ class UltraJSONTests(unittest.TestCase):
         d = {u'key': JSONTest()}
         output = ujson.encode(d)
         dec = ujson.decode(output)
-        self.assertEquals(dec, {u'key': obj})
+        self.assertEqual(dec, {u'key': obj})
 
     def test_object_with_json_type_error(self):
         # __json__ must return a string, otherwise it should raise an error.
@@ -987,7 +903,7 @@ class UltraJSONTests(unittest.TestCase):
         self.assertEqual(-1.4567893, ujson.loads("-1.4567893"))
         self.assertEqual(-1.567893, ujson.loads("-1.567893"))
         self.assertEqual(-1.67893, ujson.loads("-1.67893"))
-        self.assertEqual(-1.7893, ujson.loads("-1.7893", precise_float=True))
+        self.assertEqual(-1.7893, ujson.loads("-1.7893"))
         self.assertEqual(-1.893, ujson.loads("-1.893"))
         self.assertEqual(-1.3, ujson.loads("-1.3"))
 
@@ -997,38 +913,9 @@ class UltraJSONTests(unittest.TestCase):
         self.assertEqual(1.4567893, ujson.loads("1.4567893"))
         self.assertEqual(1.567893, ujson.loads("1.567893"))
         self.assertEqual(1.67893, ujson.loads("1.67893"))
-        self.assertEqual(1.7893, ujson.loads("1.7893", precise_float=True))
+        self.assertEqual(1.7893, ujson.loads("1.7893"))
         self.assertEqual(1.893, ujson.loads("1.893"))
         self.assertEqual(1.3, ujson.loads("1.3"))
-
-    def test_encodeBigSet(self):
-        s = set()
-        for x in range(0, 100000):
-            s.add(x)
-        ujson.encode(s)
-
-    @unittest.skipIf(blist is None, "This test tests functionality with the blist library")
-    def test_encodeBlist(self):
-        b = blist(list(range(10)))
-        c = ujson.dumps(b)
-        d = ujson.loads(c)
-
-        self.assertEqual(10, len(d))
-
-        for x in range(10):
-            self.assertEqual(x, d[x])
-
-    def test_encodeEmptySet(self):
-        s = set()
-        self.assertEqual("[]", ujson.encode(s))
-
-    def test_encodeSet(self):
-        s = set([1, 2, 3, 4, 5, 6, 7, 8, 9])
-        enc = ujson.encode(s)
-        dec = ujson.decode(enc)
-
-        for v in dec:
-            self.assertTrue(v in s)
 
     def test_ReadBadObjectSyntax(self):
         input = '{"age", 44}'

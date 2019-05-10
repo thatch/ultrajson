@@ -67,7 +67,7 @@ typedef struct __DecoderParams
 //#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)
 #define PRINTMARK()
 
-void Object_objectAddKey(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value)
+static void Object_objectAddKey(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value)
 {
   PyDict_SetItem (obj, name, value);
   Py_DECREF( (PyObject *) name);
@@ -75,14 +75,14 @@ void Object_objectAddKey(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value)
   return;
 }
 
-void Object_arrayAddItem(void *prv, JSOBJ obj, JSOBJ value)
+static void Object_arrayAddItem(void *prv, JSOBJ obj, JSOBJ value)
 {
   PyList_Append(obj, value);
   Py_DECREF( (PyObject *) value);
   return;
 }
 
-JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end)
+static JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end)
 {
   PyObject *strobj, *newobj;
   DecoderParams *dp = prv;
@@ -100,47 +100,47 @@ JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end)
   return newobj;
 }
 
-JSOBJ Object_newTrue(void *prv)
+static JSOBJ Object_newTrue(void *prv)
 {
   Py_RETURN_TRUE;
 }
 
-JSOBJ Object_newFalse(void *prv)
+static JSOBJ Object_newFalse(void *prv)
 {
   Py_RETURN_FALSE;
 }
 
-JSOBJ Object_newNull(void *prv)
+static JSOBJ Object_newNull(void *prv)
 {
   Py_RETURN_NONE;
 }
 
-JSOBJ Object_newObject(void *prv)
+static JSOBJ Object_newObject(void *prv)
 {
   return PyDict_New();
 }
 
-JSOBJ Object_newArray(void *prv)
+static JSOBJ Object_newArray(void *prv)
 {
   return PyList_New(0);
 }
 
-JSOBJ Object_newInteger(void *prv, JSINT32 value)
+static JSOBJ Object_newInteger(void *prv, JSINT32 value)
 {
   return PyInt_FromLong( (long) value);
 }
 
-JSOBJ Object_newLong(void *prv, JSINT64 value)
+static JSOBJ Object_newLong(void *prv, JSINT64 value)
 {
   return PyLong_FromLongLong (value);
 }
 
-JSOBJ Object_newUnsignedLong(void *prv, JSUINT64 value)
+static JSOBJ Object_newUnsignedLong(void *prv, JSUINT64 value)
 {
   return PyLong_FromUnsignedLongLong (value);
 }
 
-JSOBJ Object_newDouble(void *prv, double value)
+static JSOBJ Object_newDouble(void *prv, double value)
 {
   return PyFloat_FromDouble(value);
 }
@@ -164,14 +164,13 @@ static void Object_releaseObject(void *prv, JSOBJ obj)
   Py_DECREF( ((PyObject *)obj));
 }
 
-static char *g_kwlist[] = {"obj", "precise_float", "object_hook", "string_hook", NULL};
+static char *g_kwlist[] = {"obj", "object_hook", "string_hook", NULL};
 
 PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
 {
   PyObject *ret;
   PyObject *sarg;
   PyObject *arg;
-  PyObject *opreciseFloat = NULL;
   PyObject *oobjectHook = NULL;
   PyObject *ostringHook = NULL;
 
@@ -196,22 +195,15 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
     PyObject_Realloc
   };
 
-  decoder.preciseFloat = 0;
-
   DecoderParams dp = {
       NULL, //objectHook
       NULL, //stringHook
   };
   decoder.prv = &dp;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOO", g_kwlist, &arg, &opreciseFloat, &oobjectHook, &ostringHook))
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OO", g_kwlist, &arg, &oobjectHook, &ostringHook))
   {
       return NULL;
-  }
-
-  if (opreciseFloat && PyObject_IsTrue(opreciseFloat))
-  {
-      decoder.preciseFloat = 1;
   }
 
   if (oobjectHook && PyCallable_Check(oobjectHook))
@@ -248,7 +240,11 @@ PyObject* JSONToObj(PyObject* self, PyObject *args, PyObject *kwargs)
   decoder.errorStr = NULL;
   decoder.errorOffset = NULL;
 
+  dconv_s2d_init(DCONV_S2D_ALLOW_TRAILING_JUNK, 0.0, 0.0, "Infinity", "NaN");
+
   ret = JSON_DecodeObject(&decoder, PyString_AS_STRING(sarg), PyString_GET_SIZE(sarg));
+
+  dconv_s2d_free();
 
   if (sarg != arg)
   {
