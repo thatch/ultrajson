@@ -116,7 +116,7 @@ it will be transformed to a timestamp.
 
 
 pre_encode_primitive
----------------
+--------------------
 The boolean flag that indicates that pre_encode_hook() should also be called
 for Python objects that serialized to primitive JSON types (Number, String,
 Boolean, null).
