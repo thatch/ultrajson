@@ -1,24 +1,17 @@
 ﻿# coding=UTF-8
 from __future__ import print_function, unicode_literals
-import six
-from six.moves import range, zip
 
-import calendar
-import functools
 import decimal
+import functools
 import json
 import math
-import time
-import sys
-import pytz
 import datetime
+import unittest
 
-if six.PY2:
-    import unittest2 as unittest
-else:
-    import unittest
+import six
 
 import ujson
+from six.moves import range, zip
 
 json_unicode = json.dumps if six.PY3 else functools.partial(json.dumps, encoding="utf-8")
 
@@ -228,7 +221,7 @@ class UltraJSONTests(unittest.TestCase):
         sut = {'a': 4.56}
         encoded = ujson.encode(sut)
         decoded = ujson.decode(encoded)
-        self.assertAlmostEqual(sut[u'a'], decoded[u'a'])
+        self.assertAlmostEqual(sut['a'], decoded['a'])
 
     def test_encodeDictWithUnicodeKeys(self):
         input = {"key1": "value1", "key1": "value1", "key1": "value1", "key1": "value1", "key1": "value1", "key1": "value1"}
@@ -489,7 +482,6 @@ class UltraJSONTests(unittest.TestCase):
         input = -float('inf')
         self.assertRaises(OverflowError, ujson.encode, input)
 
-    @unittest.skipIf(sys.version_info < (2, 7), "No Ordered dict in < 2.7")
     def test_encodeOrderedDict(self):
         from collections import OrderedDict
         input = OrderedDict([(1, 1), (0, 0), (8, 8), (2, 2)])
@@ -777,36 +769,36 @@ class UltraJSONTests(unittest.TestCase):
             def __json__(self):
                 return '"' + output_text + '"'
 
-        d = {u'key': JSONTest()}
+        d = {'key': JSONTest()}
         output = ujson.encode(d)
         dec = ujson.decode(output)
-        self.assertEqual(dec, {u'key': output_text})
+        self.assertEqual(dec, {'key': output_text})
 
     def test_object_with_json_unicode(self):
         # If __json__ returns a string, then that string
         # will be used as a raw JSON snippet in the object.
-        output_text = u'this is the correct output'
+        output_text = 'this is the correct output'
         class JSONTest:
             def __json__(self):
-                return u'"' + output_text + u'"'
+                return '"' + output_text + '"'
 
-        d = {u'key': JSONTest()}
+        d = {'key': JSONTest()}
         output = ujson.encode(d)
         dec = ujson.decode(output)
-        self.assertEqual(dec, {u'key': output_text})
+        self.assertEqual(dec, {'key': output_text})
 
     def test_object_with_complex_json(self):
         # If __json__ returns a string, then that string
         # will be used as a raw JSON snippet in the object.
-        obj = {u'foo': [u'bar', u'baz']}
+        obj = {'foo': ['bar', 'baz']}
         class JSONTest:
             def __json__(self):
                 return ujson.encode(obj)
 
-        d = {u'key': JSONTest()}
+        d = {'key': JSONTest()}
         output = ujson.encode(d)
         dec = ujson.decode(output)
-        self.assertEqual(dec, {u'key': obj})
+        self.assertEqual(dec, {'key': obj})
 
     def test_object_with_json_type_error(self):
         # __json__ must return a string, otherwise it should raise an error.
@@ -815,7 +807,7 @@ class UltraJSONTests(unittest.TestCase):
                 def __json__(self):
                     return return_value
 
-            d = {u'key': JSONTest()}
+            d = {'key': JSONTest()}
             self.assertRaises(TypeError, ujson.encode, d)
 
     def test_object_with_json_attribute_error(self):
@@ -824,7 +816,7 @@ class UltraJSONTests(unittest.TestCase):
             def __json__(self):
                 raise AttributeError
 
-        d = {u'key': JSONTest()}
+        d = {'key': JSONTest()}
         self.assertRaises(AttributeError, ujson.encode, d)
 
     def test_decodeArrayTrailingCommaFail(self):

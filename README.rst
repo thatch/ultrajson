@@ -1,5 +1,14 @@
 UltraJSON (Internet Archive Fork)
 =================================
+
+.. image:: https://img.shields.io/pypi/v/ujson-ia.svg?style=flat
+    :alt: PyPI version
+    :target: https://pypi.python.org/pypi/ujson-ia
+
+.. image:: https://img.shields.io/pypi/pyversions/ujson-ia.svg
+    :alt: Supported Python versions
+    :target: https://pypi.python.org/pypi/ujson-ia
+
 .. image:: https://travis-ci.org/internetarchive/ultrajson.svg?branch=master
     :target: https://travis-ci.org/internetarchive/ultrajson
 
@@ -17,7 +26,7 @@ To install:
 Back to your regularly scheduled readme
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-UltraJSON is an ultra fast JSON encoder and decoder written in pure C with bindings for Python 2.5+ and 3.
+UltraJSON is an ultra fast JSON encoder and decoder written in pure C with bindings for Python 2.7 and 3.5+.
 
 For a more painless day to day C/C++ JSON decoder experience please checkout ujson4c_, based on UltraJSON.
 
