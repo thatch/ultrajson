@@ -84,9 +84,9 @@ finally:
     f.close()
 
 setup(
-    name = 'ujson-ia',
+    name = 'ujson-th',
     version = get_version(),
-    description = "Ultra fast JSON encoder and decoder for Python (Internet Archive fork)",
+    description = "Ultra fast JSON encoder and decoder for Python (Tim's compatibility fork)",
     long_description = README,
     libraries = [libdoubleconversion],
     ext_modules = [module1],
@@ -94,7 +94,7 @@ setup(
     author_email="jonas.tarnstrom@esn.me",
     license="BSD License",
     platforms=['any'],
-    url="https://github.com/internetarchive/ultrajson",
+    url="https://github.com/thatch/ultrajson",
     cmdclass = {'build_ext': build_ext, 'build_clib': build_clib_without_warnings},
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
     classifiers=CLASSIFIERS,
