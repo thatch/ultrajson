@@ -84,7 +84,7 @@ finally:
     f.close()
 
 setup(
-    name = 'ujson-th',
+    name = 'ujson',
     version = get_version(),
     description = "Ultra fast JSON encoder and decoder for Python (Tim's compatibility fork)",
     long_description = README,
