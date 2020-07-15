@@ -72,7 +72,7 @@ def get_version():
     finally:
         if file:
             file.close()
-    m = re.search(r'#define\s+UJSON_VERSION\s+"(\d+\.\d+(?:\.\d+)?)"', header)
+    m = re.search(r'#define\s+UJSON_VERSION\s+"(\d.*?)"', header)
     assert m, "version.h must contain UJSON_VERSION macro"
     return m.group(1)
 
